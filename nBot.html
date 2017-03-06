@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Игра</title>
+	<script type="text/javascript" charset="utf-8" src="js_nBot/nBot.js"></script>
+	<style> 
+		.gears  {visibility: hidden; width : 0px; height : 0px;}
+	</style>
+</head>
+<body>
+	 
+	<canvas id="myCanvas" width="720" height="1280" style="border:1px solid #d3d3d3;">Your browser does not support the HTML5 canvas tag.</canvas>
+	<!--
+	<div>Fired events: <span id="info"></span></div><br />
+	-->
+
+	
+	<img id="gear_64_01" class = "gears" src="gears/64/gear_01.png" alt="gears">
+	<img id="gear_64_02" class = "gears" src="gears/64/gear_02.png" alt="gears">
+	<img id="gear_64_03" class = "gears" src="gears/64/gear_03.png" alt="gears">
+	<img id="gear_64_04" class = "gears" src="gears/64/gear_04.png" alt="gears">
+	<img id="gear_64_05" class = "gears" src="gears/64/gear_05.png" alt="gears">
+	<img id="gear_64_06" class = "gears" src="gears/64/gear_06.png" alt="gears">
+	<img id="gear_64_07" class = "gears" src="gears/64/gear_07.png" alt="gears">
+	<img id="gear_64_08" class = "gears" src="gears/64/gear_08.png" alt="gears">
+	<img id="gear_64_09" class = "gears" src="gears/64/gear_09.png" alt="gears">
+	<img id="gear_64_10" class = "gears" src="gears/64/gear_10.png" alt="gears">
+	<img id="gear_64_11" class = "gears" src="gears/64/gear_11.png" alt="gears">
+	<img id="gear_64_12" class = "gears" src="gears/64/gear_12.png" alt="gears">
+	<img id="gear_64_13" class = "gears" src="gears/64/gear_13.png" alt="gears">
+	<img id="gear_64_14" class = "gears" src="gears/64/gear_14.png" alt="gears">
+	<img id="gear_64_15" class = "gears" src="gears/64/gear_15.png" alt="gears">
+	<img id="gear_64_16" class = "gears" src="gears/64/gear_16.png" alt="gears">
+	<img id="gear_64_17" class = "gears" src="gears/64/gear_17.png" alt="gears">
+	<img id="gear_64_18" class = "gears" src="gears/64/gear_18.png" alt="gears">
+	<img id="gear_64_19" class = "gears" src="gears/64/gear_19.png" alt="gears">
+	<img id="gear_64_20" class = "gears" src="gears/64/gear_20.png" alt="gears">
+	<img id="gear_64_21" class = "gears" src="gears/64/gear_21.png" alt="gears">
+	<img id="gear_64_22" class = "gears" src="gears/64/gear_22.png" alt="gears">
+	<img id="gear_64_23" class = "gears" src="gears/64/gear_23.png" alt="gears">
+	<img id="gear_64_24" class = "gears" src="gears/64/gear_24.png" alt="gears">
+	<img id="gear_64_25" class = "gears" src="gears/64/gear_25.png" alt="gears">
+	<img id="gear_64_26" class = "gears" src="gears/64/gear_26.png" alt="gears">
+	<img id="gear_64_27" class = "gears" src="gears/64/gear_27.png" alt="gears">
+	<img id="gear_64_28" class = "gears" src="gears/64/gear_28.png" alt="gears">
+	<img id="gear_64_29" class = "gears" src="gears/64/gear_29.png" alt="gears">
+	<img id="gear_64_30" class = "gears" src="gears/64/gear_30.png" alt="gears">
+	<img id="gear_art" class = "gears" src="gears/gear_art.png" alt="gears">
+
+	<script type="text/javascript">
+		var canvas;
+		var ctx; 
+		var canv_width;
+		var canv_height;
+		
+
+		function myFunction() {
+			canvas = document.getElementById("myCanvas");
+			ctx = canvas.getContext("2d"); 
+			canv_width = canvas.width;
+			canv_height = canvas.height;
+		
+		
+		
+			canv_width = GetCanvasWidth(window.innerWidth,canv_width);
+			canv_height = GetCanvasHeight(window.innerHeight,canv_height);
+			//document.write("width = " + canv_width);
+			//document.write("height = " + canv_height);
+			
+			if (canv_width > canv_height) {
+				var tmp = canv_width;
+				canv_width = canv_height;
+				canv_height = tmp;
+			}
+			//debug:
+			canv_width = 720;
+			canv_height = 1280;
+			var curr_level = 0;
+			
+			//делим экран на области
+			// нижняя часть, 100% ширины - квадрат поля. 
+			// выше - четыре поля с примером шаблона
+			// выше - арт и score
+			DrawMainField(canv_width,canv_height,curr_level);
+			
+
+			//myVar = setInterval( t_SetColor, 200);
+			// Заполним массив с кодами цветов
+			//FillInTheTable();
+			// Рисуем цветные квадратики
+			//DrawElements();
+			var prevent=true;
+			
+			canvas.addEventListener("touchstart", function(e) {
+					if(prevent){e.preventDefault();}
+					//document.getElementById("info").innerHTML =  "!touchstart";
+					var x = Math.round(e.touches[0].pageX);
+					var y = Math.round(e.touches[0].pageY);
+					//document.getElementById("info").innerHTML = "!touchmove" + x;
+					MyCanvasClick(x,y);
+			},false);
+			
+			canvas.addEventListener("touchmove", function(e) {
+					if(prevent){e.preventDefault();}
+					var x = Math.round(e.touches[0].pageX);
+					var y = Math.round(e.touches[0].pageY);
+					//document.getElementById("info").innerHTML = "!touchmove" + x;
+					MyCanvasClick(x,y);
+			},false);
+			
+			canvas.addEventListener("touchend", function(e){
+					//document.getElementById("info").innerHTML = "!touchend";
+			},false);		
+			
+			//canvas.addEventListener('mousedown', function(e) { MyCanvasClick(e.pageX,e.pageY); },false);
+			//canvas.addEventListener('mousemove', function(e) { MyCanvasClick(e.pageX,e.pageY); },false);			
+		}
+		
+	
+		window.onload = myFunction;
+	</script>
+
+</body>
+</html>
