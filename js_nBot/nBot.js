@@ -180,7 +180,7 @@
 		// main filed square mesh
 		screen_layout.main_field_x0 = screen_layout.main_field_padding;
 		screen_layout.main_field_y0 = h - w - screen_layout.adv_field_height; 
-		if (screen_layout.main_field_width == 0) { //if width set to 0 it mean AUTODETECT.
+		if (screen_layout.main_field_width === 0) { //if width set to 0 it mean AUTODETECT.
 			screen_layout.main_field_width = Math.round((w - 2*screen_layout.main_field_padding ) / level_layout.cells_per_field);
 			MAGIC_BIG = screen_layout.main_field_width - 4;
 		}
@@ -220,7 +220,7 @@
 				//g = Math.floor((Math.random() * 256));
 				//b = Math.floor((Math.random() * 256));
 				//ChangeImageColor(gears_30[k-1],gears_xy[i][j][0], gears_xy[i][j][1],r,g,b);
-				if (k==30) {
+				if (k===30) {
 					k = 0;
 				}
 			}
@@ -313,7 +313,7 @@
 		var beta;
 		for (var i=0;i<imgData.data.length;i+=4) {
 			beta = imgData.data[i];
-			if (alpha != beta) {
+			if (alpha !== beta) {
 				imgData.data[i]= r | imgData.data[i];
 				imgData.data[i+1]= g | imgData.data[i+1];
 				imgData.data[i+2]= b | imgData.data[i+2];
@@ -352,7 +352,7 @@
 	}
 	
 	function FillInBlueprintTemplate(lvl, tmplt,gears,max_count){
-		var i;j;
+		var i,j;
 		switch(template_layout_type){
 			case "T":
 				break;
