@@ -78,44 +78,42 @@
 			canv_height = 1280;
 			var curr_level = 0;
 			
+			// to calculate grid nodes and all sizes
+			CalculateLayouts(canv_width,canv_height);
+			
 			//делим экран на области
 			// нижняя часть, 100% ширины - квадрат поля. 
 			// выше - четыре поля с примером шаблона
 			// выше - арт и score
 			DrawMainField(canv_width,canv_height,curr_level);
-			
 
-			//myVar = setInterval( t_SetColor, 200);
-			// Заполним массив с кодами цветов
-
-			//FillInTheTable();
-			// Рисуем цветные квадратики
-			//DrawElements();
 			var prevent=true;
 			
 			canvas.addEventListener("touchstart", function(e) {
 					if(prevent){e.preventDefault();}
-					//document.getElementById("info").innerHTML =  "!touchstart";
 					var x = Math.round(e.touches[0].pageX);
 					var y = Math.round(e.touches[0].pageY);
-					//document.getElementById("info").innerHTML = "!touchmove" + x;
-					MyCanvasClick(x,y);
+					MyCanvasClick(x,y,"touchstart");
 			},false);
 			
 			canvas.addEventListener("touchmove", function(e) {
 					if(prevent){e.preventDefault();}
 					var x = Math.round(e.touches[0].pageX);
 					var y = Math.round(e.touches[0].pageY);
-					//document.getElementById("info").innerHTML = "!touchmove" + x;
-					MyCanvasClick(x,y);
+					MyCanvasClick(x,y,"touchmove");
 			},false);
 			
 			canvas.addEventListener("touchend", function(e){
-					//document.getElementById("info").innerHTML = "!touchend";
+					if(prevent){e.preventDefault();}
+					var x = Math.round(e.touches[0].pageX);
+					var y = Math.round(e.touches[0].pageY);
+					MyCanvasClick(x,y,"touchend");					
 			},false);		
 			
-			//canvas.addEventListener('mousedown', function(e) { MyCanvasClick(e.pageX,e.pageY); },false);
-			//canvas.addEventListener('mousemove', function(e) { MyCanvasClick(e.pageX,e.pageY); },false);			
+
+			canvas.addEventListener('mouseup', function(e) { MyCanvasClick(e.pageX,e.pageY,'mouseup'); },false);
+			canvas.addEventListener('mousedown', function(e) { MyCanvasClick(e.pageX,e.pageY,'mousedown'); },false);
+			canvas.addEventListener('mousemove', function(e) { MyCanvasClick(e.pageX,e.pageY,'mousemove'); },false);			
 		}
 		
 	

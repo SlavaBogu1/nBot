@@ -2,45 +2,29 @@
 // Re-build the game
 // Define GLOBAL objects for the game
 
+    var ctx;
 // This object to store all node coordinates (x,y values) plus some extra info (like visibility)
-	var Layouts = {
-		header  :{game_title:{x:0,y:0},score:{x:0,y:0},art:{x:0,y:0}}, // each record represent x and y coordinates
+	var game_layouts = {
+		header_xy  :{game_title:{x:0,y:0},score:{x:0,y:0},art:{x:0,y:0}}, // each record represent x and y coordinates
 		patterns:{first:{visible:true,x:[],y:[]},second:{visible:false,x:[],y:[]},third:{visible:false,x:[],y:[]},fours:{visible:false,x:[],y:[]}}, //four pattern arrays
-		board   :{x:[],y:[]},
-		footer  :{x:[],y:[]}
+		number_of_cells : 0,
+		board_grid_nodes :{x:[],y:[]}, 
+		footer_xy  :{x:[],y:[]}
 	};
+	//samples
+	//game_layouts.header_xy.game_title.x = 100;
+	//game_layouts.header_xy.game_title["y"] = game_layouts.header.game_title.x;
+	//game_layouts.patterns.first.x[0] = 100;
+	//game_layouts.patterns["first"].y[0] = 200;
+	//game_layouts.patterns.first.x[1] = 300;
+	//game_layouts.patterns.first.y[1] = 400;
 	
 	var template_gears = [];
-	
-	//samples
-	//Coordinates.header.game_title.x = 100;
-	//Coordinates.header.game_title["y"] = Coordinates.header.game_title.x;
-	//Coordinates.patterns.first.x[0] = 100;
-	//Coordinates.patterns["first"].y[0] = 200;
-	//Coordinates.patterns.first.x[1] = 300;
-	//Coordinates.patterns.first.y[1] = 400;
-
-
-	
-//-----------------------------------------------------OLD CODE
-	var mobile_screen_sizes = [
-		["720", "480","1080","980", "540","320","768", "480","750", "360","240","640", "640","240","800", "1440"],
-		["1280","800","1920","1675","960","480","1280","854","1334","640","320","1136","960","400","1280","2560"]
-	]; // just as reerence in order of popularity
-
-	var CellsInField, CellsInPattern, CellsPerPattern;
-	var MaxFieldColor, MaxPatternColor;
-	var colors_arr = [];
-	var color_patterns = [];
-	var rec_colors = [
-		["00","00","FF","00","FF","FF","FF","22","00","88"],
-		["00","FF","00","FF","FF","00","FF","88","22","00"],
-		["FF","00","00","FF","00","FF","FF","00","88","22"]
-	];
 	
 	var level = 0; //начальный уровень
 	if (level > 9 || level < 0 ) {level = 0;}
 
+	var color_palette = {background:"#1183a5", color_light:"#9ce5fb", color_30:"#5dd7fb", color_60:"#26bbe7", color_90:"#27a6cc"};
 	
 	/* level_cfg - в зависимости от уровня задаем разное количество клеток и цветов
 	level 0:  поле 6*6, 4 цвета
@@ -50,8 +34,44 @@
 	..
 	*/	
 	var level_cfg = [[6,4],[6,5],[8,4],[8,5],[8,6],[10,4],[10,5],[10,6],[10,7],[10,8],[12,4],[12,5],[12,6],[12,7],[12,8],[12,9],[12,10]];
+	
+	// compatibility .. TO_DELETE
+	var level_layout; 
+	var screen_layout = {main_field_x0:0, main_field_y0:0, main_field_width:0, main_field_padding:5, templ_field_x0:0, temp_field_y0:0, templ_field_width:48, templ_field_padding:30,
+						adv_field_x0:0, adv_field_y0:0, adv_field_width:0, adv_field_height:100, score_field_x0:0, score_field_y0:0, score_field_width:0};
+	// compatibility .. TO_DELETE
+	
+	
+	// input: canvas width and canvas height
+	// result: update global object: game_layouts
+	function CalculateLayouts(w,h){
+		game_layouts.header_xy.art.x = 10; // background art horizontal offset 
+		game_layouts.header_xy.art.y = 10; // background art vertical offset
+		game_layouts.header_xy.game_title.x = (w >> 1); // basis to draw title in the middle of screen
+		game_layouts.header_xy.game_title.y = 50; // title vertical offset
+		
+		game_layouts.number_of_cells = level_cfg[level][0]; // AKA CellsInField
+		level_layout = {cells_per_field: game_layouts.number_of_cells, cells_per_template:CellsInPattern}; // compatibility .. TO_DELETE
+		
+		//game_layouts.board_grid_nodes.x[0] = 
+		//game_layouts.board_grid_nodes.y[0] = 
+	
+	}
+	
+	
+//-----------------------------------------------------OLD CODE
+	var mobile_screen_sizes = [
+		["720", "480","1080","980", "540","320","768", "480","750", "360","240","640", "640","240","800", "1440"],
+		["1280","800","1920","1675","960","480","1280","854","1334","640","320","1136","960","400","1280","2560"]
+	]; // just as reference in order of popularity
+
+	var CellsInField, CellsInPattern, CellsPerPattern;
+	var MaxFieldColor, MaxPatternColor;
+	var colors_arr = [];
+	var color_patterns = [];
+	
 	/*game board settings*/
-	CellsInField = level_cfg[level][0];
+	//CellsInField = level_cfg[level][0];
 	MaxFieldColor = level_cfg[level][1];
 
 	/* pattern_cfg - в зависимости от уровня задаем разные типы шаблонов
@@ -85,89 +105,13 @@
 			template_layout_type = "+";
 			break;
 	}
-	
-	function FillInTheTable(){
-		var i,j,k,p;
-		var pattern_palete = []; //палитра цветов шаблона - случайно выбранные несколько цветов из максимального диапазона
-		
-		for (i=0;i<CellsInField;i++){
-			colors_arr[i] = [];
-			for (j=0;j<CellsInField;j++){
-				colors_arr[i][j] = Math.floor((Math.random() * MaxFieldColor));
-			}
-		}
-		
-		// заполним палитру
-		for (i=0;i<MaxPatternColor;i++){
-			pattern_palete[i] =  Math.floor((Math.random() * MaxFieldColor));
-		}
-		p = 0;
-		for (i=0;i<level_layout.cells_per_template;i++){
-			color_patterns[i] = [];
-			for (j=0;j<CellsPerPattern;j++){
-				color_patterns[i][j] = [];
-				for (k=0;k<CellsPerPattern;k++){
-					color_patterns[i][j][k] = pattern_palete[p++];
-					if (p>=MaxPatternColor) { p = 0; }
-				}
-			}
-		}
-	}
-	
-	function DrawRectRGB(x,y,w,h,r,g,b){
-		hexString = "#" + r + g + b;
-		ctx.beginPath();
-		ctx.fillStyle=hexString;
-		ctx.fillRect(x,y,w,h);
-		ctx.closePath();	
-	}
 
-	//use color string
-	function DrawRect(x,y,s,h,c){
-		ctx.beginPath();
-		ctx.fillStyle=c;
-		ctx.fillRect(x,y,s,h);
-		ctx.closePath();
-	}
-	
-	
-	function GetCanvasWidth(win_w,canv_w){
-		if (canv_w  < win_w) {
-			return win_w;
-		}	
-		return canv_w;
-	}
-	function GetCanvasHeight(win_h,canv_h){
-		if (canv_h  < win_h) {
-			return win_h;
-		}	
-		return canv_h;
-	}
-
-	var template_image;
-
-	// format number less than 10 with lead zero ( 01,02 ..)
-	function pad(n) {
-		return (n < 10) ? ("0" + n) : n;
-	}
-	
-	function getZeroNum(zcnt,num) {
-	  var temp=""+num;
-	  while(temp.length<zcnt)temp="0"+temp;
-	  return temp;
-	}
-	
-	
-	var screen_layout = {main_field_x0:0, main_field_y0:0, main_field_width:0, main_field_padding:5, templ_field_x0:0, temp_field_y0:0, templ_field_width:48, templ_field_padding:30,
-						adv_field_x0:0, adv_field_y0:0, adv_field_width:0, adv_field_height:100, score_field_x0:0, score_field_y0:0, score_field_width:0};
-	var color_palette = {background:"#1183a5", color_light:"#9ce5fb", color_30:"#5dd7fb", color_60:"#26bbe7", color_90:"#27a6cc"};
-	var level_layout = {cells_per_field:CellsInField, cells_per_template:CellsInPattern};
     var gears_30 = []; //array to keep the list of 30 gears.
 	var gears_xy;
 	var templates_xy;
 	var MAGIC_BIG;
 	var MAGIC_SMALL = screen_layout.templ_field_width -4;
-		
+	var template_image;
 	var canvas_width;
 
 	function DrawMainField(w,h,lvl){
@@ -252,7 +196,7 @@
 		for (i=0;i<level_layout.cells_per_template;i++){
 			for (j=0;j<level_layout.cells_per_template;j++){
 				ctx.drawImage(gears_30[k++], templates_xy[i][j][0], templates_xy[i][j][1],MAGIC_SMALL,MAGIC_SMALL);
-				if (k==30) {
+				if (k===30) {
 					k = 0;
 				}
 			}
@@ -273,27 +217,39 @@
 			
 		}
 
-		// Top part of screen
-		var gear_art = document.getElementById("gear_art");
-		ctx.drawImage(gear_art, 10 , 10);
-		
-		ctx.font="30px Verdana";
-		var name = "nanoBot maker";
-		var name_w = ctx.measureText(name).width;
-		var approx_text_height = ctx.measureText('M').width;
-		x0 = (w >> 1) - (name_w >> 1);
-		DrawRect(x0-2,50 - approx_text_height,name_w+4,approx_text_height + 4,color_palette.background);
-		ctx.strokeText(name,x0,50);
-		//var name = "____Bot maker";
-		//ctx.fillText(name,x0,50);
-
+		DrawGameBoardTopArt();		
+		DrawGameTitle("nanoBot maker");
 		DrawScore(0);
 	}
+
+	function DrawGameBoardTopArt(){
+		// Top part of screen
+		var gear_art = document.getElementById("gear_art");
+		ctx.drawImage(gear_art, game_layouts.header_xy.art.x , game_layouts.header_xy.art.y);
+	}
 	
+	function DrawGameTitle(title){
+		var name_w;
+		var approx_text_height;
+		
+		ctx.font="30px Verdana";
+		name_w = ctx.measureText(title).width;
+		approx_text_height = ctx.measureText('M').width;
+		
+		x0 = game_layouts.header_xy.game_title.x - (name_w >> 1);
+		y0 = game_layouts.header_xy.game_title.y;
+		DrawRect(x0-2, y0 - approx_text_height,name_w+4,approx_text_height + 4,color_palette.background);
+		ctx.strokeText(title,x0,y0);
+	}
+		
 	function DrawScore(scores){
+		var name_w;
+		var approx_text_height;
 		var name = "SCORE: " + getZeroNum(6,scores);
-		var name_w = ctx.measureText(name).width;
-		var approx_text_height = ctx.measureText('M').width;
+		
+		ctx.font="30px Verdana";
+		name_w = ctx.measureText(name).width;
+		approx_text_height = ctx.measureText('M').width;
 		
 		x0 = canvas_width - name_w - 50;
 		DrawRect(x0-2,120 - approx_text_height - 2,name_w+4,approx_text_height + 4,color_palette.background);
@@ -301,6 +257,16 @@
 		ctx.fillText(name,x0,120);
 	}
 	
+	function DrawUnderScore(ustext){
+		var ustext_w = ctx.measureText(ustext).width;
+		var approx_text_height = ctx.measureText('M').width;
+		
+		x0 = canvas_width - ustext_w - 50;
+		DrawRect(x0-50,150 - approx_text_height - 2,ustext_w+54,approx_text_height + 14,color_palette.background);
+		ctx.fillStyle = color_palette.color_30;
+		ctx.fillText(ustext,x0,150);
+	}
+
 	
 	function ChangeImageColor(img,x,y,r,g,b){
 		var c_w,c_h;
@@ -346,9 +312,9 @@
 		ctx.stroke();
 	}
 	
-	function MyCanvasClick (x,y){
+	function MyCanvasClick (x,y,evnt){
 		DrawScore(x); // debug purpose only - show that touch is working
-		
+		DrawUnderScore(evnt);
 	}
 	
 	function FillInBlueprintTemplate(lvl, tmplt,gears,max_count){
@@ -366,6 +332,45 @@
 				break;
 		}
 	}
+	
+	// format number less than 10 with lead zero ( 01,02 ..)
+	function pad(n) {
+		return (n < 10) ? ("0" + n) : n;
+	}
+	
+	// add zeros before the number
+	function getZeroNum(zcnt,num) {
+	  var temp=""+num;
+	  while(temp.length<zcnt)temp="0"+temp;
+	  return temp;
+	}
 
-	
-	
+	// screen rotation ?
+	function GetCanvasWidth(win_w,canv_w){
+		if (canv_w  < win_w) {
+			return win_w;
+		}	
+		return canv_w;
+	}
+	function GetCanvasHeight(win_h,canv_h){
+		if (canv_h  < win_h) {
+			return win_h;
+		}	
+		return canv_h;
+	}
+
+	function DrawRectRGB(x,y,w,h,r,g,b){
+		hexString = "#" + r + g + b;
+		ctx.beginPath();
+		ctx.fillStyle=hexString;
+		ctx.fillRect(x,y,w,h);
+		ctx.closePath();	
+	}
+
+	//use color string
+	function DrawRect(x,y,s,h,c){
+		ctx.beginPath();
+		ctx.fillStyle=c;
+		ctx.fillRect(x,y,s,h);
+		ctx.closePath();
+	}
