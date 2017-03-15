@@ -8,7 +8,15 @@
 		header_xy  :{game_title:{x:0,y:0},score:{x:0,y:0},art:{x:0,y:0}}, // each record represent x and y coordinates
 		patterns:{first:{visible:true,x:[],y:[]},second:{visible:false,x:[],y:[]},third:{visible:false,x:[],y:[]},fours:{visible:false,x:[],y:[]}}, //four pattern arrays
 		number_of_cells : 0,
+		board_cell_width : 0,
+		board_width_divider : 1,  // 1/board_cell_width
+		template_cell_width : 48,
+		template_width_divider : 1,
+		footer_height : 100,
+		cells_on_board :0,
+		cells_per_template : 0,
 		board_grid_nodes :{x:[],y:[]}, 
+		gear_nodes :{x:[],y:[]}, 
 		footer_xy  :{x:[],y:[]}
 	};
 	//samples
@@ -37,25 +45,58 @@
 	
 	// compatibility .. TO_DELETE
 	var level_layout; 
-	var screen_layout = {main_field_x0:0, main_field_y0:0, main_field_width:0, main_field_padding:5, templ_field_x0:0, temp_field_y0:0, templ_field_width:48, templ_field_padding:30,
-						adv_field_x0:0, adv_field_y0:0, adv_field_width:0, adv_field_height:100, score_field_x0:0, score_field_y0:0, score_field_width:0};
+	var screen_layout = { main_field_padding:5, templ_field_x0:0, temp_field_y0:0, templ_field_padding:30};
 	// compatibility .. TO_DELETE
 	
 	
 	// input: canvas width and canvas height
 	// result: update global object: game_layouts
 	function CalculateLayouts(w,h){
-		game_layouts.header_xy.art.x = 10; // background art horizontal offset 
-		game_layouts.header_xy.art.y = 10; // background art vertical offset
+		var board_padding = 5;
+		var art_x_padding = 10;
+		var art_y_padding = 10;
+		var title_y_padding = 50;
+		var i,j,count;
+
+		game_layouts.cells_on_board = level_cfg[level][0]; // number of cells in the main field
+		game_layouts.cells_per_template = pattern_cfg[level][2]; // number of cells in the template
+		
+		game_layouts.header_xy.art.x = art_x_padding; // background art horizontal offset 
+		game_layouts.header_xy.art.y = art_y_padding; // background art vertical offset
 		game_layouts.header_xy.game_title.x = (w >> 1); // basis to draw title in the middle of screen
-		game_layouts.header_xy.game_title.y = 50; // title vertical offset
+		game_layouts.header_xy.game_title.y = title_y_padding; // title vertical offset
 		
-		game_layouts.number_of_cells = level_cfg[level][0]; // AKA CellsInField
-		level_layout = {cells_per_field: game_layouts.number_of_cells, cells_per_template:CellsInPattern}; // compatibility .. TO_DELETE
+		game_layouts.board_grid_nodes.x[0] = board_padding; // x-coordinate of node to draw the cell border
+		game_layouts.board_grid_nodes.y[0] = h - w - game_layouts.footer_height; // y-coordinate of node to draw the cell border
+
+		game_layouts.board_cell_width = Math.round((w - 2*game_layouts.board_grid_nodes.x[0] ) / game_layouts.cells_on_board);
+        game_layouts.board_width_divider = 1 / game_layouts.board_cell_width;
+		game_layouts.template_width_divider = 1 / game_layouts.template_cell_width;
+
+		/*
+		for (i = 0; i < game_layouts.cells_on_board; i++) {
+			gears_xy[i] = new Array(game_layouts.cells_on_board);
+			for (j = 0; j < game_layouts.cells_on_board; j++) {
+				gears_xy[i][j] = new Array(2);
+				// MAGIC - magic number: scale of the  gear.png 
+				x0 = game_layouts.board_grid_nodes.x[0] + ((game_layouts.board_cell_width - MAGIC_BIG) >> 1) + i * game_layouts.board_cell_width;
+				y0 = game_layouts.board_grid_nodes.y[0] + ((game_layouts.board_cell_width - MAGIC_BIG) >> 1) + j * game_layouts.board_cell_width;
+				gears_xy[i][j][0] = x0;
+				gears_xy[i][j][1] = y0;
+			}
+		}
+		*/
+		/*
+		count = 0;
+		for (i = 0; i < game_layouts.cells_on_board; i++) {
+			for (j = 0; j < game_layouts.cells_on_board; j++) {
+				game_layouts.gear_nodes.x[count] = game_layouts.board_grid_nodes.x[0] + ((game_layouts.board_cell_width - MAGIC_BIG) >> 1) + i * game_layouts.board_cell_width;
+				game_layouts.gear_nodes.y[count] = game_layouts.board_grid_nodes.y[0] + ((game_layouts.board_cell_width - MAGIC_BIG) >> 1) + j * game_layouts.board_cell_width;			}
+		}
+		*/
+		game_layouts.gear_nodes.x[0] = game_layouts.board_grid_nodes.x[0] + 5; // x-coordinate of position inside the cell to draw the gear
+		game_layouts.gear_nodes.y[0] = 0; // x-coordinate of position inside the cell to draw the gear
 		
-		//game_layouts.board_grid_nodes.x[0] = 
-		//game_layouts.board_grid_nodes.y[0] = 
-	
 	}
 	
 	
@@ -110,7 +151,7 @@
 	var gears_xy;
 	var templates_xy;
 	var MAGIC_BIG;
-	var MAGIC_SMALL = screen_layout.templ_field_width -4;
+	var MAGIC_SMALL;
 	var template_image;
 	var canvas_width;
 
@@ -120,26 +161,22 @@
 		canvas_width = w;
 		//solid background
 		DrawRect(0,0,w,h,color_palette.background);
-		
-		// main filed square mesh
-		screen_layout.main_field_x0 = screen_layout.main_field_padding;
-		screen_layout.main_field_y0 = h - w - screen_layout.adv_field_height; 
-		if (screen_layout.main_field_width === 0) { //if width set to 0 it mean AUTODETECT.
-			screen_layout.main_field_width = Math.round((w - 2*screen_layout.main_field_padding ) / level_layout.cells_per_field);
-			MAGIC_BIG = screen_layout.main_field_width - 4;
-		}
-		DrawSquares(screen_layout.main_field_x0,screen_layout.main_field_y0,screen_layout.main_field_width,level_layout.cells_per_field,color_palette.color_light);
+
+		//
+		MAGIC_BIG = game_layouts.board_cell_width - 4;
+		MAGIC_SMALL = game_layouts.template_cell_width - 4;
+		DrawSquares(game_layouts.board_grid_nodes.x[0],game_layouts.board_grid_nodes.y[0],game_layouts.board_cell_width,game_layouts.cells_on_board,color_palette.color_60);
 
 		// calculate x0,y0 coordinates for gears in the main field
 		var x0,y0;
-		gears_xy = new Array(level_layout.cells_per_field);
-		for (i = 0; i < level_layout.cells_per_field; i++) {
-			gears_xy[i] = new Array(level_layout.cells_per_field);
-			for (j = 0; j < level_layout.cells_per_field; j++) {
+		gears_xy = new Array(game_layouts.cells_on_board);
+		for (i = 0; i < game_layouts.cells_on_board; i++) {
+			gears_xy[i] = new Array(game_layouts.cells_on_board);
+			for (j = 0; j < game_layouts.cells_on_board; j++) {
 				gears_xy[i][j] = new Array(2);
 				// MAGIC - magic number: scale of the  gear.png 
-				x0 = screen_layout.main_field_x0 + ((screen_layout.main_field_width - MAGIC_BIG) >> 1) + i * screen_layout.main_field_width;
-				y0 = screen_layout.main_field_y0 + ((screen_layout.main_field_width - MAGIC_BIG) >> 1) + j * screen_layout.main_field_width;
+				x0 = game_layouts.board_grid_nodes.x[0] + ((game_layouts.board_cell_width - MAGIC_BIG) >> 1) + i * game_layouts.board_cell_width;
+				y0 = game_layouts.board_grid_nodes.y[0] + ((game_layouts.board_cell_width - MAGIC_BIG) >> 1) + j * game_layouts.board_cell_width;
 				gears_xy[i][j][0] = x0;
 				gears_xy[i][j][1] = y0;
 			}
@@ -157,8 +194,8 @@
 		
 		k = 0;
 		//var r,g,b;
-		for (i=0;i<level_layout.cells_per_field;i++){
-			for (j=0;j<level_layout.cells_per_field;j++){
+		for (i=0;i<game_layouts.cells_on_board;i++){
+			for (j=0;j<game_layouts.cells_on_board;j++){
 				ctx.drawImage(gears_30[k++], gears_xy[i][j][0], gears_xy[i][j][1],MAGIC_BIG,MAGIC_BIG);
 				//r = Math.floor((Math.random() * 256));
 				//g = Math.floor((Math.random() * 256));
@@ -173,28 +210,28 @@
 
 		// template fields square mesh
 		screen_layout.templ_field_x0 = screen_layout.templ_field_padding;
-		var template_width = level_layout.cells_per_template * screen_layout.templ_field_width;
-		screen_layout.templ_field_y0 = screen_layout.main_field_y0 - screen_layout.templ_field_padding - template_width;
-		DrawSquares(screen_layout.templ_field_x0,screen_layout.templ_field_y0,screen_layout.templ_field_width,level_layout.cells_per_template,color_palette.color_light);
+		var template_width = game_layouts.cells_per_template * game_layouts.template_cell_width;
+		screen_layout.templ_field_y0 = game_layouts.board_grid_nodes.y[0] - screen_layout.templ_field_padding - template_width;
+		DrawSquares(screen_layout.templ_field_x0,screen_layout.templ_field_y0,game_layouts.template_cell_width,game_layouts.cells_per_template,color_palette.color_90);
 		
 
 		// calculate x0,y0 coordinates for gears in the main field
-		templates_xy = new Array(level_layout.cells_per_template);
-		for (i = 0; i < level_layout.cells_per_template; i++) {
-			templates_xy[i] = new Array(level_layout.cells_per_template);
-			for (j = 0; j < level_layout.cells_per_template; j++) {
+		templates_xy = new Array(game_layouts.cells_per_template);
+		for (i = 0; i < game_layouts.cells_per_template; i++) {
+			templates_xy[i] = new Array(game_layouts.cells_per_template);
+			for (j = 0; j < game_layouts.cells_per_template; j++) {
 				templates_xy[i][j] = new Array(2);
 				// MAGIC_SMALL - magic number: size of gear.png files
-				x0 = screen_layout.templ_field_x0 + ((screen_layout.templ_field_width - MAGIC_SMALL) >> 1) + i * screen_layout.templ_field_width;
-				y0 = screen_layout.templ_field_y0 + ((screen_layout.templ_field_width - MAGIC_SMALL) >> 1) + j * screen_layout.templ_field_width;
+				x0 = screen_layout.templ_field_x0 + ((game_layouts.template_cell_width - MAGIC_SMALL) >> 1) + i * game_layouts.template_cell_width;
+				y0 = screen_layout.templ_field_y0 + ((game_layouts.template_cell_width - MAGIC_SMALL) >> 1) + j * game_layouts.template_cell_width;
 				templates_xy[i][j][0] = x0;
 				templates_xy[i][j][1] = y0;
 			}
 		}
 
 		k = 0;
-		for (i=0;i<level_layout.cells_per_template;i++){
-			for (j=0;j<level_layout.cells_per_template;j++){
+		for (i=0;i<game_layouts.cells_per_template;i++){
+			for (j=0;j<game_layouts.cells_per_template;j++){
 				ctx.drawImage(gears_30[k++], templates_xy[i][j][0], templates_xy[i][j][1],MAGIC_SMALL,MAGIC_SMALL);
 				if (k===30) {
 					k = 0;
@@ -233,6 +270,7 @@
 		var approx_text_height;
 		
 		ctx.font="30px Verdana";
+		ctx.strokeStyle=color_palette.color_light;
 		name_w = ctx.measureText(title).width;
 		approx_text_height = ctx.measureText('M').width;
 		
