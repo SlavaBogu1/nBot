@@ -53,6 +53,8 @@
 		var ctx; 
 		var canv_width;
 		var canv_height;
+		var canv_left;
+		var canv_top;
 		
 
 		function myFunction() {
@@ -60,6 +62,8 @@
 			ctx = canvas.getContext("2d"); 
 			canv_width = canvas.width;
 			canv_height = canvas.height;
+			canv_left = canvas.offsetLeft;
+			canv_top  = canvas.offsetTop;
 		
 		
 		
@@ -93,27 +97,27 @@
 					if(prevent){e.preventDefault();}
 					var x = Math.round(e.touches[0].pageX);
 					var y = Math.round(e.touches[0].pageY);
-					MyCanvasClick(x,y,"touchstart");
+					PointerMovements(x,y,"touchstart");
 			},false);
 			
 			canvas.addEventListener("touchmove", function(e) {
 					if(prevent){e.preventDefault();}
 					var x = Math.round(e.touches[0].pageX);
 					var y = Math.round(e.touches[0].pageY);
-					MyCanvasClick(x,y,"touchmove");
+					PointerMovements(x,y,"touchmove");
 			},false);
 			
 			canvas.addEventListener("touchend", function(e){
 					if(prevent){e.preventDefault();}
 					var x = Math.round(e.touches[0].pageX);
 					var y = Math.round(e.touches[0].pageY);
-					MyCanvasClick(x,y,"touchend");					
+					PointerMovements(x,y,"touchend");					
 			},false);		
 			
 
-			canvas.addEventListener('mouseup', function(e) { MyCanvasClick(e.pageX,e.pageY,'mouseup'); },false);
-			canvas.addEventListener('mousedown', function(e) { MyCanvasClick(e.pageX,e.pageY,'mousedown'); },false);
-			canvas.addEventListener('mousemove', function(e) { MyCanvasClick(e.pageX,e.pageY,'mousemove'); },false);			
+			canvas.addEventListener('mouseup', function(e) { PointerMovements(e.pageX,e.pageY,'mouseup'); },false);
+			canvas.addEventListener('mousedown', function(e) { PointerMovements(e.pageX,e.pageY,'mousedown'); },false);
+			canvas.addEventListener('mousemove', function(e) { PointerMovements(e.pageX,e.pageY,'mousemove'); },false);			
 		}
 		
 	

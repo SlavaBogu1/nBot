@@ -12,12 +12,11 @@
 		board_width_divider : 1,  // 1/board_cell_width
 		template_cell_width : 48,
 		template_width_divider : 1,
-		footer_height : 100,
 		cells_on_board :0,
 		cells_per_template : 0,
-		board_grid_nodes :{x:[],y:[]}, 
-		gear_nodes :{x:[],y:[]}, 
-		footer_xy  :{x:[],y:[]}
+		board_grid_nodes :{x:[],y:[]}, // top-left coordinates of cell
+		gear_nodes :{x:[],y:[]}, //top-left coordinates of gear image in the cell
+		footer :{footer_xy:{x:0,y:0}, footer_height:100} //top-left coordinates of footer frame
 	};
 	//samples
 	//game_layouts.header_xy.game_title.x = 100;
@@ -26,6 +25,8 @@
 	//game_layouts.patterns["first"].y[0] = 200;
 	//game_layouts.patterns.first.x[1] = 300;
 	//game_layouts.patterns.first.y[1] = 400;
+	
+	var grid_coordinates = {x:0, y:0};
 	
 	var template_gears = [];
 	
@@ -56,7 +57,7 @@
 		var art_x_padding = 10;
 		var art_y_padding = 10;
 		var title_y_padding = 50;
-		var i,j,count;
+		var i,j;
 
 		game_layouts.cells_on_board = level_cfg[level][0]; // number of cells in the main field
 		game_layouts.cells_per_template = pattern_cfg[level][2]; // number of cells in the template
@@ -67,10 +68,10 @@
 		game_layouts.header_xy.game_title.y = title_y_padding; // title vertical offset
 		
 		game_layouts.board_grid_nodes.x[0] = board_padding; // x-coordinate of node to draw the cell border
-		game_layouts.board_grid_nodes.y[0] = h - w - game_layouts.footer_height; // y-coordinate of node to draw the cell border
+		game_layouts.board_grid_nodes.y[0] = h - w - game_layouts.footer.footer_height; // y-coordinate of node to draw the cell border
 
 		game_layouts.board_cell_width = Math.round((w - 2*game_layouts.board_grid_nodes.x[0] ) / game_layouts.cells_on_board);
-        game_layouts.board_width_divider = 1 / game_layouts.board_cell_width;
+		game_layouts.board_width_divider = 1 / game_layouts.board_cell_width;
 		game_layouts.template_width_divider = 1 / game_layouts.template_cell_width;
 
 		/*
@@ -86,14 +87,13 @@
 			}
 		}
 		*/
-		/*
-		count = 0;
+		var offset = (game_layouts.board_cell_width - MAGIC_BIG) >> 1;
+		MAGIC_BIG = game_layouts.board_cell_width - 4;
 		for (i = 0; i < game_layouts.cells_on_board; i++) {
-			for (j = 0; j < game_layouts.cells_on_board; j++) {
-				game_layouts.gear_nodes.x[count] = game_layouts.board_grid_nodes.x[0] + ((game_layouts.board_cell_width - MAGIC_BIG) >> 1) + i * game_layouts.board_cell_width;
-				game_layouts.gear_nodes.y[count] = game_layouts.board_grid_nodes.y[0] + ((game_layouts.board_cell_width - MAGIC_BIG) >> 1) + j * game_layouts.board_cell_width;			}
+			game_layouts.gear_nodes.x[i] = game_layouts.board_grid_nodes.x[0] + offset + i * game_layouts.board_cell_width;
+			game_layouts.gear_nodes.y[i] = game_layouts.board_grid_nodes.y[0] + offset + i * game_layouts.board_cell_width;
 		}
-		*/
+		
 		game_layouts.gear_nodes.x[0] = game_layouts.board_grid_nodes.x[0] + 5; // x-coordinate of position inside the cell to draw the gear
 		game_layouts.gear_nodes.y[0] = 0; // x-coordinate of position inside the cell to draw the gear
 		
@@ -106,13 +106,12 @@
 		["1280","800","1920","1675","960","480","1280","854","1334","640","320","1136","960","400","1280","2560"]
 	]; // just as reference in order of popularity
 
-	var CellsInField, CellsInPattern, CellsPerPattern;
+	var CellsPerPattern;
 	var MaxFieldColor, MaxPatternColor;
 	var colors_arr = [];
 	var color_patterns = [];
 	
 	/*game board settings*/
-	//CellsInField = level_cfg[level][0];
 	MaxFieldColor = level_cfg[level][1];
 
 	/* pattern_cfg - в зависимости от уровня задаем разные типы шаблонов
@@ -123,7 +122,6 @@
 	var pattern_cfg = [[0,2,3],[0,3,3],[1,2,3],[1,3,3],[2,3,4],[2,4,4],[2,4,4],[3,5,5],[3,5,5],[3,6,5]]; //TBD
 	
 	/*template settings*/
-	CellsInPattern = pattern_cfg[level][2]; // size of template square
 	MaxPatternColor = pattern_cfg[level][1];
 	template_layout_type = "+"; // default template type is cross
 	
@@ -163,7 +161,7 @@
 		DrawRect(0,0,w,h,color_palette.background);
 
 		//
-		MAGIC_BIG = game_layouts.board_cell_width - 4;
+		//MAGIC_BIG = game_layouts.board_cell_width - 4;
 		MAGIC_SMALL = game_layouts.template_cell_width - 4;
 		DrawSquares(game_layouts.board_grid_nodes.x[0],game_layouts.board_grid_nodes.y[0],game_layouts.board_cell_width,game_layouts.cells_on_board,color_palette.color_60);
 
@@ -350,11 +348,19 @@
 		ctx.stroke();
 	}
 	
-	function MyCanvasClick (x,y,evnt){
+	function PointerMovements (x,y,evnt){
 		DrawScore(x); // debug purpose only - show that touch is working
-		DrawUnderScore(evnt);
+		GetGridCoordinates(x,y);
+		DrawUnderScore(evnt + " x: " + grid_coordinates.x + " y: " + grid_coordinates.y);
 	}
 	
+	function GetGridCoordinates(x,y) {
+		var grid_x = Math.floor((x - game_layouts.board_grid_nodes.x[0] - canv_left)* game_layouts.board_width_divider);
+		var grid_y = Math.floor((y - game_layouts.board_grid_nodes.y[0] - canv_top)* game_layouts.board_width_divider);
+		grid_coordinates.x = grid_x;
+		grid_coordinates.y = grid_y;
+	}
+		
 	function FillInBlueprintTemplate(lvl, tmplt,gears,max_count){
 		var i,j;
 		switch(template_layout_type){
