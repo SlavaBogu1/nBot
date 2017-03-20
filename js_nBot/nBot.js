@@ -16,6 +16,7 @@
 		cells_per_template : 0,
 		board_grid_nodes :{x:[],y:[]}, // top-left coordinates of cell
 		gear_nodes :{x:[],y:[]}, //top-left coordinates of gear image in the cell
+		selected_node:{x:-1,y:-1},
 		footer :{footer_xy:{x:0,y:0}, footer_height:100} //top-left coordinates of footer frame
 	};
 	//samples
@@ -88,10 +89,13 @@
 		}
 		*/
 		var offset = (game_layouts.board_cell_width - MAGIC_BIG) >> 1;
-		MAGIC_BIG = game_layouts.board_cell_width - 4;
+		MAGIC_BIG = game_layouts.board_cell_width - 14;
 		for (i = 0; i < game_layouts.cells_on_board; i++) {
-			game_layouts.gear_nodes.x[i] = game_layouts.board_grid_nodes.x[0] + offset + i * game_layouts.board_cell_width;
-			game_layouts.gear_nodes.y[i] = game_layouts.board_grid_nodes.y[0] + offset + i * game_layouts.board_cell_width;
+			var increas = i * game_layouts.board_cell_width;
+			game_layouts.gear_nodes.x[i] = game_layouts.board_grid_nodes.x[0] + offset + increas;
+			game_layouts.gear_nodes.y[i] = game_layouts.board_grid_nodes.y[0] + offset + increas;
+			game_layouts.board_grid_nodes.x[i] = game_layouts.board_grid_nodes.x[0] + increas;
+			game_layouts.board_grid_nodes.y[i] = game_layouts.board_grid_nodes.y[0] + increas;
 		}
 		
 		game_layouts.gear_nodes.x[0] = game_layouts.board_grid_nodes.x[0] + 5; // x-coordinate of position inside the cell to draw the gear
@@ -161,7 +165,6 @@
 		DrawRect(0,0,w,h,color_palette.background);
 
 		//
-		//MAGIC_BIG = game_layouts.board_cell_width - 4;
 		MAGIC_SMALL = game_layouts.template_cell_width - 4;
 		DrawSquares(game_layouts.board_grid_nodes.x[0],game_layouts.board_grid_nodes.y[0],game_layouts.board_cell_width,game_layouts.cells_on_board,color_palette.color_60);
 
@@ -268,7 +271,7 @@
 		var approx_text_height;
 		
 		ctx.font="30px Verdana";
-		ctx.strokeStyle=color_palette.color_light;
+		ctx.strokeStyle = color_palette.color_light;
 		name_w = ctx.measureText(title).width;
 		approx_text_height = ctx.measureText('M').width;
 		
@@ -281,7 +284,7 @@
 	function DrawScore(scores){
 		var name_w;
 		var approx_text_height;
-		var name = "SCORE: " + getZeroNum(6,scores);
+		var name = "ENERGY: " + getZeroNum(6,scores);
 		
 		ctx.font="30px Verdana";
 		name_w = ctx.measureText(name).width;
@@ -345,18 +348,77 @@
 			ctx.lineTo(x2+w, y2);
 			y2 = y2 + cell_w;			
 		}
+		ctx.closePath();
 		ctx.stroke();
 	}
 	
 	function PointerMovements (x,y,evnt){
-		DrawScore(x); // debug purpose only - show that touch is working
-		GetGridCoordinates(x,y);
-		DrawUnderScore(evnt + " x: " + grid_coordinates.x + " y: " + grid_coordinates.y);
+		var cur;
+		//DrawScore(x); // debug purpose only - show that touch is working
+		GetGridCoordinates(x,y); // convert pinter coordinates into indexes in the grid
+	
+		switch(evnt){
+			case"mousedown":
+			//case"touchstart":
+				cur = document.body.style.cursor;
+				if (cur!=="") document.body.style.cursor = "";
+				break;
+			case"mouseup":
+			//case"touchend":
+				document.body.style.cursor = "url('"+gears_30[0].src+"'), auto";
+				break;
+			case"mousemove":
+			case"touchmove":
+				DrawUnderScore(evnt + " x: " + grid_coordinates.x + " y: " + grid_coordinates.y);
+				break;
+		}
+		HighlightCell(grid_coordinates.x, grid_coordinates.y);
+		
 	}
 	
+	function HighlightCell(x,y){
+		var w = game_layouts.board_cell_width;
+		var cx,cy;
+		ctx.lineWidth = 2;
+		if (game_layouts.selected_node.x === x &&  game_layouts.selected_node.y === y) { 
+			return; 
+		}
+	
+		UnhighlightCell(game_layouts.selected_node.x,game_layouts.selected_node.y);
+
+		ctx.beginPath();
+		cx = game_layouts.board_grid_nodes.x[x];
+		cy = game_layouts.board_grid_nodes.y[y];
+		ctx.strokeStyle = color_palette.color_light;
+		ctx.rect(cx,cy,w,w);
+		ctx.closePath();
+		ctx.stroke();		
+		game_layouts.selected_node.x = x;
+		game_layouts.selected_node.y = y;
+	}
+	
+	function UnhighlightCell(x,y){
+		var w = game_layouts.board_cell_width;
+		var cx,cy;
+
+		cx = game_layouts.board_grid_nodes.x[x];
+		cy = game_layouts.board_grid_nodes.y[y];
+	
+		ctx.beginPath();
+		//ctx.lineWidth = 2;
+		ctx.strokeStyle = color_palette.color_90;
+		ctx.rect(cx,cy,w,w);
+		ctx.closePath();		
+		ctx.stroke();		
+	}
+
 	function GetGridCoordinates(x,y) {
 		var grid_x = Math.floor((x - game_layouts.board_grid_nodes.x[0] - canv_left)* game_layouts.board_width_divider);
 		var grid_y = Math.floor((y - game_layouts.board_grid_nodes.y[0] - canv_top)* game_layouts.board_width_divider);
+		if (grid_x < 0) grid_x = 0;
+		if (grid_y < 0) grid_y = 0;
+		if (grid_x >= game_layouts.cells_on_board) grid_x = game_layouts.cells_on_board - 1;
+		if (grid_y >= game_layouts.cells_on_board) grid_y = game_layouts.cells_on_board - 1;
 		grid_coordinates.x = grid_x;
 		grid_coordinates.y = grid_y;
 	}
@@ -405,7 +467,7 @@
 
 	function DrawRectRGB(x,y,w,h,r,g,b){
 		hexString = "#" + r + g + b;
-		ctx.beginPath();
+		сtx.beginPath();
 		ctx.fillStyle=hexString;
 		ctx.fillRect(x,y,w,h);
 		ctx.closePath();	
