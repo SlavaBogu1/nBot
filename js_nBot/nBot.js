@@ -5,6 +5,7 @@
     var ctx;
 // This object to store all node coordinates (x,y values) plus some extra info (like visibility)
 	var game_layouts = {
+	// PROPERTIES	
 		header_xy  :{game_title:{x:0,y:0},score:{x:0,y:0},art:{x:0,y:0}}, // each record represent x and y coordinates
 		patterns:{first:{visible:true,x:[],y:[]},second:{visible:false,x:[],y:[]},third:{visible:false,x:[],y:[]},fours:{visible:false,x:[],y:[]}}, //four pattern arrays
 		number_of_cells : 0,
@@ -15,9 +16,12 @@
 		cells_on_board :0,
 		cells_per_template : 0,
 		board_grid_nodes :{x:[],y:[]}, // top-left coordinates of cell
-		gear_nodes :{x:[],y:[]}, //top-left coordinates of gear image in the cell
+		gear_nodes :{x:[], y:[]}, //top-left coordinates of gear image in the cell
+		gears :{id:[]}, //list of gears to display. ID is the index in the gears_30 array
 		selected_node:{x:-1,y:-1},
-		footer :{footer_xy:{x:0,y:0}, footer_height:100} //top-left coordinates of footer frame
+		footer :{footer_xy:{x:0,y:0}, footer_height:100}, //top-left coordinates of footer frame
+	// METHODS
+		test : function() { return 42; }
 	};
 	//samples
 	//game_layouts.header_xy.game_title.x = 100;
@@ -46,7 +50,6 @@
 	var level_cfg = [[6,4],[6,5],[8,4],[8,5],[8,6],[10,4],[10,5],[10,6],[10,7],[10,8],[12,4],[12,5],[12,6],[12,7],[12,8],[12,9],[12,10]];
 	
 	// compatibility .. TO_DELETE
-	var level_layout; 
 	var screen_layout = { main_field_padding:5, templ_field_x0:0, temp_field_y0:0, templ_field_padding:30};
 	// compatibility .. TO_DELETE
 	
@@ -60,9 +63,6 @@
 		var title_y_padding = 50;
 		var i,j;
 
-		game_layouts.cells_on_board = level_cfg[level][0]; // number of cells in the main field
-		game_layouts.cells_per_template = pattern_cfg[level][2]; // number of cells in the template
-		
 		game_layouts.header_xy.art.x = art_x_padding; // background art horizontal offset 
 		game_layouts.header_xy.art.y = art_y_padding; // background art vertical offset
 		game_layouts.header_xy.game_title.x = (w >> 1); // basis to draw title in the middle of screen
@@ -75,31 +75,26 @@
 		game_layouts.board_width_divider = 1 / game_layouts.board_cell_width;
 		game_layouts.template_width_divider = 1 / game_layouts.template_cell_width;
 
-		/*
-		for (i = 0; i < game_layouts.cells_on_board; i++) {
-			gears_xy[i] = new Array(game_layouts.cells_on_board);
-			for (j = 0; j < game_layouts.cells_on_board; j++) {
-				gears_xy[i][j] = new Array(2);
-				// MAGIC - magic number: scale of the  gear.png 
-				x0 = game_layouts.board_grid_nodes.x[0] + ((game_layouts.board_cell_width - MAGIC_BIG) >> 1) + i * game_layouts.board_cell_width;
-				y0 = game_layouts.board_grid_nodes.y[0] + ((game_layouts.board_cell_width - MAGIC_BIG) >> 1) + j * game_layouts.board_cell_width;
-				gears_xy[i][j][0] = x0;
-				gears_xy[i][j][1] = y0;
-			}
-		}
-		*/
 		var offset = (game_layouts.board_cell_width - MAGIC_BIG) >> 1;
 		MAGIC_BIG = game_layouts.board_cell_width - 14;
+
 		for (i = 0; i < game_layouts.cells_on_board; i++) {
-			var increas = i * game_layouts.board_cell_width;
-			game_layouts.gear_nodes.x[i] = game_layouts.board_grid_nodes.x[0] + offset + increas;
-			game_layouts.gear_nodes.y[i] = game_layouts.board_grid_nodes.y[0] + offset + increas;
-			game_layouts.board_grid_nodes.x[i] = game_layouts.board_grid_nodes.x[0] + increas;
-			game_layouts.board_grid_nodes.y[i] = game_layouts.board_grid_nodes.y[0] + increas;
+			var increase = i * game_layouts.board_cell_width;
+			/*game_layouts.gear_nodes.x[i] = game_layouts.board_grid_nodes.x[0] + offset + increase;
+			game_layouts.gear_nodes.y[i] = game_layouts.board_grid_nodes.y[0] + offset + increase;*/			
+			game_layouts.board_grid_nodes.x[i] = game_layouts.board_grid_nodes.x[0] + increase;
+			game_layouts.board_grid_nodes.y[i] = game_layouts.board_grid_nodes.y[0] + increase;
 		}
 		
-		game_layouts.gear_nodes.x[0] = game_layouts.board_grid_nodes.x[0] + 5; // x-coordinate of position inside the cell to draw the gear
-		game_layouts.gear_nodes.y[0] = 0; // x-coordinate of position inside the cell to draw the gear
+		game_layouts.gear_nodes.x[0] = game_layouts.board_grid_nodes.x[0] + 5;
+		game_layouts.gear_nodes.y[0] = game_layouts.board_grid_nodes.y[0] + 5;
+		for (i=1;i<game_layouts.cells_on_board;i++) {
+			game_layouts.gear_nodes.x[i] = game_layouts.gear_nodes.x[i-1] + offset + game_layouts.board_cell_width; 
+			game_layouts.gear_nodes.y[i] = game_layouts.gear_nodes.y[i-1] + offset + game_layouts.board_cell_width;
+		}
+		
+		//game_layouts.gear_nodes.x[0] = game_layouts.board_grid_nodes.x[0] + 5; // x-coordinate of position inside the cell to draw the gear
+		//game_layouts.gear_nodes.y[0] = 0; // x-coordinate of position inside the cell to draw the gear
 		
 	}
 	
@@ -149,6 +144,7 @@
 			break;
 	}
 
+	var NUM_OF_GEARS = 30;
     var gears_30 = []; //array to keep the list of 30 gears.
 	var gears_xy;
 	var templates_xy;
@@ -157,6 +153,30 @@
 	var template_image;
 	var canvas_width;
 
+	function InitArrays (){
+		var i,j;
+		var gear_id_name;
+		
+		// Load gears into array
+		for (i=0;i<NUM_OF_GEARS;i++){
+			gear_id_name = "gear_64_" + pad(i+1);
+			gears_30[i] = document.getElementById(gear_id_name);
+		}
+		
+		game_layouts.cells_on_board = level_cfg[level][0]; // number of cells in the main field
+		game_layouts.cells_per_template = pattern_cfg[level][2]; // number of cells in the template
+
+		
+		for (i=0;i<game_layouts.cells_on_board;i++) {
+			game_layouts.gears.id[i] = new Array(game_layouts.cells_on_board);
+			game_layouts.gear_nodes[i] = new Array(game_layouts.cells_on_board);
+			for (j=0; j<game_layouts.cells_on_board;j++){
+				game_layouts.gears.id[i][j] = Math.floor((Math.random() * NUM_OF_GEARS)); 			
+			}
+		}
+		
+	}
+	
 	function DrawMainField(w,h,lvl){
 		var i,j,k;
 		
@@ -183,31 +203,20 @@
 			}
 		}
 
-		
-		// Load gears into array
-		var gear_id_name;
-		for (i=0;i<30;i++){
-			gear_id_name = "gear_64_" + pad(i+1);
-			gears_30[i] = document.getElementById(gear_id_name);
-		}
-		
-		//FillInBlueprintTemplate(level,template_gears,gears_30,30);
-		
 		k = 0;
 		//var r,g,b;
-		for (i=0;i<game_layouts.cells_on_board;i++){
-			for (j=0;j<game_layouts.cells_on_board;j++){
-				ctx.drawImage(gears_30[k++], gears_xy[i][j][0], gears_xy[i][j][1],MAGIC_BIG,MAGIC_BIG);
-				//r = Math.floor((Math.random() * 256));
-				//g = Math.floor((Math.random() * 256));
-				//b = Math.floor((Math.random() * 256));
-				//ChangeImageColor(gears_30[k-1],gears_xy[i][j][0], gears_xy[i][j][1],r,g,b);
-				if (k===30) {
-					k = 0;
-				}
+		/*for (i=0;i<game_layouts.cells_on_board*game_layouts.cells_on_board;i++){
+			//ctx.drawImage(gears_30[k++], gears_xy[i][j][0], gears_xy[i][j][1],MAGIC_BIG,MAGIC_BIG);
+			ctx.drawImage(gears_30[k++], game_layouts.gear_nodes.x[i], game_layouts.gear_nodes.y[i],MAGIC_BIG,MAGIC_BIG);
+			if (k===30) {
+				k = 0;
+			}
+		}*/
+		for (i=0;i<game_layouts.cells_on_board;i++) {
+			for (j=0; j<game_layouts.cells_on_board;j++){
+				ctx.drawImage(gears_30[game_layouts.gears.id[i][j]], game_layouts.gear_nodes.x[i], game_layouts.gear_nodes.y[j],MAGIC_BIG,MAGIC_BIG);
 			}
 		}
-
 
 		// template fields square mesh
 		screen_layout.templ_field_x0 = screen_layout.templ_field_padding;
@@ -360,12 +369,12 @@
 		switch(evnt){
 			case"mousedown":
 			//case"touchstart":
-				cur = document.body.style.cursor;
-				if (cur!=="") document.body.style.cursor = "";
+				//cur = document.body.style.cursor;
+				document.body.style.cursor = "url('" + gears_30[0].src + "'),auto";				
 				break;
 			case"mouseup":
 			//case"touchend":
-				document.body.style.cursor = "url('"+gears_30[0].src+"'), auto";
+				if (cur!=="") document.body.style.cursor = "";
 				break;
 			case"mousemove":
 			case"touchmove":
@@ -423,21 +432,6 @@
 		grid_coordinates.y = grid_y;
 	}
 		
-	function FillInBlueprintTemplate(lvl, tmplt,gears,max_count){
-		var i,j;
-		switch(template_layout_type){
-			case "T":
-				break;
-			case "O":
-				break;
-			case "L":
-				break;
-			case "+":
-			default:
-				
-				break;
-		}
-	}
 	
 	// format number less than 10 with lead zero ( 01,02 ..)
 	function pad(n) {
