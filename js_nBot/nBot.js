@@ -7,18 +7,22 @@
 	var game_layouts = {
 	// PROPERTIES	
 		header_xy  :{game_title:{x:0,y:0},score:{x:0,y:0},art:{x:0,y:0}}, // each record represent x and y coordinates
-		patterns:{first:{visible:true,x:[],y:[]},second:{visible:false,x:[],y:[]},third:{visible:false,x:[],y:[]},fours:{visible:false,x:[],y:[]}}, //four pattern arrays
-		number_of_cells : 0,
+	// patterns
+		patterns:{show:2,names:["first","second","third","fours"],first:{x:[],y:[],id:[]},second:{x:[],y:[],id:[]},third:{x:[],y:[],id:[]},fours:{x:[],y:[],id:[]}}, //four pattern arrays
+		pattern_cell_width : 48,
+		pattern_width_divider : 1,
+	//main board
 		board_cell_width : 0,
 		board_width_divider : 1,  // 1/board_cell_width
-		template_cell_width : 48,
-		template_width_divider : 1,
 		cells_on_board :0,
 		cells_per_template : 0,
 		board_grid_nodes :{x:[],y:[]}, // top-left coordinates of cell
 		gear_nodes :{x:[], y:[]}, //top-left coordinates of gear image in the cell
 		gears :{id:[]}, //list of gears to display. ID is the index in the gears_30 array
-		selected_node:{x:-1,y:-1},
+                        // it is actually two-dimentional array, so to obtain id = gears.id[x][y]
+		selected_node:{x:-1,y:-1,px:-1,py:-1},  //px,py - prevoius x and y
+		target_node:{x:-1,y:-1,px:-1,py:-1},    //px,py - prevoius x and y
+		highlighted_node:{x:-1,y:-1},
 		footer :{footer_xy:{x:0,y:0}, footer_height:100}, //top-left coordinates of footer frame
 	// METHODS
 		test : function() { return 42; }
@@ -58,6 +62,7 @@
 	// result: update global object: game_layouts
 	function CalculateLayouts(w,h){
 		var board_padding = 5;
+		var gear_padding = 5;
 		var art_x_padding = 10;
 		var art_y_padding = 10;
 		var title_y_padding = 50;
@@ -73,7 +78,7 @@
 
 		game_layouts.board_cell_width = Math.round((w - 2*game_layouts.board_grid_nodes.x[0] ) / game_layouts.cells_on_board);
 		game_layouts.board_width_divider = 1 / game_layouts.board_cell_width;
-		game_layouts.template_width_divider = 1 / game_layouts.template_cell_width;
+		game_layouts.pattern_width_divider = 1 / game_layouts.pattern_cell_width;
 
 		var offset = (game_layouts.board_cell_width - MAGIC_BIG) >> 1;
 		MAGIC_BIG = game_layouts.board_cell_width - 14;
@@ -86,15 +91,12 @@
 			game_layouts.board_grid_nodes.y[i] = game_layouts.board_grid_nodes.y[0] + increase;
 		}
 		
-		game_layouts.gear_nodes.x[0] = game_layouts.board_grid_nodes.x[0] + 5;
-		game_layouts.gear_nodes.y[0] = game_layouts.board_grid_nodes.y[0] + 5;
+		game_layouts.gear_nodes.x[0] = game_layouts.board_grid_nodes.x[0] + gear_padding;
+		game_layouts.gear_nodes.y[0] = game_layouts.board_grid_nodes.y[0] + gear_padding;
 		for (i=1;i<game_layouts.cells_on_board;i++) {
 			game_layouts.gear_nodes.x[i] = game_layouts.gear_nodes.x[i-1] + offset + game_layouts.board_cell_width; 
 			game_layouts.gear_nodes.y[i] = game_layouts.gear_nodes.y[i-1] + offset + game_layouts.board_cell_width;
 		}
-		
-		//game_layouts.gear_nodes.x[0] = game_layouts.board_grid_nodes.x[0] + 5; // x-coordinate of position inside the cell to draw the gear
-		//game_layouts.gear_nodes.y[0] = 0; // x-coordinate of position inside the cell to draw the gear
 		
 	}
 	
@@ -154,7 +156,7 @@
 	var canvas_width;
 
 	function InitArrays (){
-		var i,j;
+		var i,j,n;
 		var gear_id_name;
 		
 		// Load gears into array
@@ -174,6 +176,17 @@
 				game_layouts.gears.id[i][j] = Math.floor((Math.random() * NUM_OF_GEARS)); 			
 			}
 		}
+
+		var name;
+		for (n = 0; n < game_layouts.patterns.show; n++){
+			name = game_layouts.patterns.names[n];
+			for (i = 0 ; i < 1; i ++){
+				game_layouts.patterns[name].id[i] = new Array(1);
+				for (i = 0 ; i < 1; i ++){
+				}
+			}
+			
+		}
 		
 	}
 	
@@ -185,7 +198,7 @@
 		DrawRect(0,0,w,h,color_palette.background);
 
 		//
-		MAGIC_SMALL = game_layouts.template_cell_width - 4;
+		MAGIC_SMALL = game_layouts.pattern_cell_width - 4;
 		DrawSquares(game_layouts.board_grid_nodes.x[0],game_layouts.board_grid_nodes.y[0],game_layouts.board_cell_width,game_layouts.cells_on_board,color_palette.color_60);
 
 		// calculate x0,y0 coordinates for gears in the main field
@@ -220,9 +233,9 @@
 
 		// template fields square mesh
 		screen_layout.templ_field_x0 = screen_layout.templ_field_padding;
-		var template_width = game_layouts.cells_per_template * game_layouts.template_cell_width;
+		var template_width = game_layouts.cells_per_template * game_layouts.pattern_cell_width;
 		screen_layout.templ_field_y0 = game_layouts.board_grid_nodes.y[0] - screen_layout.templ_field_padding - template_width;
-		DrawSquares(screen_layout.templ_field_x0,screen_layout.templ_field_y0,game_layouts.template_cell_width,game_layouts.cells_per_template,color_palette.color_90);
+		DrawSquares(screen_layout.templ_field_x0,screen_layout.templ_field_y0,game_layouts.pattern_cell_width,game_layouts.cells_per_template,color_palette.color_90);
 		
 
 		// calculate x0,y0 coordinates for gears in the main field
@@ -232,8 +245,8 @@
 			for (j = 0; j < game_layouts.cells_per_template; j++) {
 				templates_xy[i][j] = new Array(2);
 				// MAGIC_SMALL - magic number: size of gear.png files
-				x0 = screen_layout.templ_field_x0 + ((game_layouts.template_cell_width - MAGIC_SMALL) >> 1) + i * game_layouts.template_cell_width;
-				y0 = screen_layout.templ_field_y0 + ((game_layouts.template_cell_width - MAGIC_SMALL) >> 1) + j * game_layouts.template_cell_width;
+				x0 = screen_layout.templ_field_x0 + ((game_layouts.pattern_cell_width - MAGIC_SMALL) >> 1) + i * game_layouts.pattern_cell_width;
+				y0 = screen_layout.templ_field_y0 + ((game_layouts.pattern_cell_width - MAGIC_SMALL) >> 1) + j * game_layouts.pattern_cell_width;
 				templates_xy[i][j][0] = x0;
 				templates_xy[i][j][1] = y0;
 			}
@@ -368,58 +381,118 @@
 	
 		switch(evnt){
 			case"mousedown":
-			//case"touchstart":
+			case"touchstart":
 				//cur = document.body.style.cursor;
-				document.body.style.cursor = "url('" + gears_30[0].src + "'),auto";				
+				var gear_id = game_layouts.gears.id[grid_coordinates.x][grid_coordinates.y];
+				document.body.style.cursor = "url('" + gears_30[gear_id].src + "'),auto";				
+				DrawUnderScore(evnt + " x: " + grid_coordinates.x + " y: " + grid_coordinates.y);				
+
+				game_layouts.selected_node.px = game_layouts.selected_node.x;
+				game_layouts.selected_node.py = game_layouts.selected_node.y;
+				game_layouts.selected_node.x = grid_coordinates.x;
+				game_layouts.selected_node.y = grid_coordinates.y;
+
+				game_layouts.target_node.px = game_layouts.target_node.x;
+				game_layouts.target_node.py = game_layouts.target_node.y;
+				game_layouts.target_node.x = -1;
+				game_layouts.target_node.y = -1;
 				break;
 			case"mouseup":
-			//case"touchend":
+			case"touchend":
+				DrawUnderScore(evnt + " x: " + grid_coordinates.x + " y: " + grid_coordinates.y);	
 				if (cur!=="") document.body.style.cursor = "";
+				game_layouts.target_node.px = game_layouts.target_node.x;
+				game_layouts.target_node.py = game_layouts.target_node.y;
+				game_layouts.target_node.x = grid_coordinates.x;
+				game_layouts.target_node.y = grid_coordinates.y;
+				game_layouts.selected_node.px = game_layouts.selected_node.x;
+				game_layouts.selected_node.py = game_layouts.selected_node.y;
+				game_layouts.selected_node.x = -1;
+				game_layouts.selected_node.y = -1;
 				break;
 			case"mousemove":
 			case"touchmove":
 				DrawUnderScore(evnt + " x: " + grid_coordinates.x + " y: " + grid_coordinates.y);
 				break;
 		}
-		HighlightCell(grid_coordinates.x, grid_coordinates.y);
-		
+		HighlightTargetCell(game_layouts.target_node.x, game_layouts.target_node.y);
+		HighlightSelectedCell(game_layouts.selected_node.x, game_layouts.selected_node.y);
+		HighlightCurrentCell(grid_coordinates.x, grid_coordinates.y,);
+	}	
+
+	function HighlightTargetCell(x,y){
+		var cx,cy,px,py;
+
+		px = game_layouts.target_node.px;
+		py = game_layouts.target_node.py;
+		if (px!==-1 || py !==-1) {
+			cx = game_layouts.board_grid_nodes.x[px];
+			cy = game_layouts.board_grid_nodes.y[py];
+			HighlightCell(cx,cy,color_palette.color_90);
+		}
+		if (x!==-1 || y !==-1) {
+			cx = game_layouts.board_grid_nodes.x[x];
+			cy = game_layouts.board_grid_nodes.y[y];
+			HighlightCell(cx,cy,"green");
+		}
 	}
-	
-	function HighlightCell(x,y){
-		var w = game_layouts.board_cell_width;
-		var cx,cy;
-		ctx.lineWidth = 2;
-		if (game_layouts.selected_node.x === x &&  game_layouts.selected_node.y === y) { 
+
+	function HighlightSelectedCell(x,y){
+		var cx,cy,px,py;
+
+		px = game_layouts.selected_node.px;
+		py = game_layouts.selected_node.py;
+		if (px!==-1 || py !==-1) {
+			cx = game_layouts.board_grid_nodes.x[px];
+			cy = game_layouts.board_grid_nodes.y[py];
+			HighlightCell(cx,cy,color_palette.color_90);
+		}
+
+		if (x!==-1 || y !==-1) {
+			cx = game_layouts.board_grid_nodes.x[x];
+			cy = game_layouts.board_grid_nodes.y[y];
+			HighlightCell(cx,cy,"red");
+		}
+	}
+
+	function HighlightCurrentCell(x,y){
+		var cx,cy; // convert x and y indexes into cell coordinates
+		// check if cell has changed
+		if (game_layouts.highlighted_node.x === x &&  game_layouts.highlighted_node.y === y) { 
 			return; 
 		}
-	
-		UnhighlightCell(game_layouts.selected_node.x,game_layouts.selected_node.y);
-
-		ctx.beginPath();
+		// remove artefacts on the board.  this is just for debug. TODO - remove later
+		if (game_layouts.selected_node.x === -1 || game_layouts.selected_node.y === -1){
+			game_layouts.target_node.px = -1;
+			game_layouts.target_node.py = -1;
+			game_layouts.target_node.x = -1;
+			game_layouts.target_node.y = -1;
+			game_layouts.selected_node.px = -1;
+			game_layouts.selected_node.py = -1;
+		}
+		// unhighlight prevoius cell
+		cx = game_layouts.board_grid_nodes.x[game_layouts.highlighted_node.x];
+		cy = game_layouts.board_grid_nodes.y[game_layouts.highlighted_node.y];
+		HighlightCell(cx,cy,color_palette.color_90); //unhighlight
+		// highlight new cell
 		cx = game_layouts.board_grid_nodes.x[x];
 		cy = game_layouts.board_grid_nodes.y[y];
-		ctx.strokeStyle = color_palette.color_light;
-		ctx.rect(cx,cy,w,w);
+		HighlightCell(cx,cy,color_palette.color_light);
+		// store new highlighted indexes
+		game_layouts.highlighted_node.x = x;
+		game_layouts.highlighted_node.y = y;
+	}
+
+	function HighlightCell(x,y,color){
+		var w = game_layouts.board_cell_width;
+		ctx.lineWidth = 2;
+		ctx.beginPath();
+		ctx.strokeStyle = color;
+		ctx.rect(x,y,w,w);
 		ctx.closePath();
 		ctx.stroke();		
-		game_layouts.selected_node.x = x;
-		game_layouts.selected_node.y = y;
 	}
 	
-	function UnhighlightCell(x,y){
-		var w = game_layouts.board_cell_width;
-		var cx,cy;
-
-		cx = game_layouts.board_grid_nodes.x[x];
-		cy = game_layouts.board_grid_nodes.y[y];
-	
-		ctx.beginPath();
-		//ctx.lineWidth = 2;
-		ctx.strokeStyle = color_palette.color_90;
-		ctx.rect(cx,cy,w,w);
-		ctx.closePath();		
-		ctx.stroke();		
-	}
 
 	function GetGridCoordinates(x,y) {
 		var grid_x = Math.floor((x - game_layouts.board_grid_nodes.x[0] - canv_left)* game_layouts.board_width_divider);

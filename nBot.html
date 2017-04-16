@@ -66,7 +66,7 @@
 			canv_top  = canvas.offsetTop;
 		
 		
-		
+			//debu purpose - replace actual size.
 			canv_width = GetCanvasWidth(window.innerWidth,canv_width);
 			canv_height = GetCanvasHeight(window.innerHeight,canv_height);
 			//document.write("width = " + canv_width);
@@ -81,6 +81,7 @@
 			canv_width = 720;
 			canv_height = 1280;
 			var curr_level = 0;
+			var e_touch_x, e_touch_y;
 			
 			InitArrays();
 			// to calculate grid nodes and all sizes
@@ -96,23 +97,27 @@
 			
 			canvas.addEventListener("touchstart", function(e) {
 					if(prevent){e.preventDefault();}
-					var x = Math.round(e.touches[0].pageX);
-					var y = Math.round(e.touches[0].pageY);
-					PointerMovements(x,y,"touchstart");
+					e_touch_x = Math.round(e.touches[0].pageX);
+					e_touch_y = Math.round(e.touches[0].pageY);
+					DrawUnderScore("ts");
+					PointerMovements(e_touch_x,e_touch_y,"touchstart");
 			},false);
 			
 			canvas.addEventListener("touchmove", function(e) {
 					if(prevent){e.preventDefault();}
-					var x = Math.round(e.touches[0].pageX);
-					var y = Math.round(e.touches[0].pageY);
-					PointerMovements(x,y,"touchmove");
+					e_touch_x = Math.round(e.touches[0].pageX);
+					e_touch_y = Math.round(e.touches[0].pageY);
+					PointerMovements(e_touch_x,e_touch_y,"touchmove");
 			},false);
 			
 			canvas.addEventListener("touchend", function(e){
 					if(prevent){e.preventDefault();}
-					var x = Math.round(e.touches[0].pageX);
-					var y = Math.round(e.touches[0].pageY);
-					PointerMovements(x,y,"touchend");					
+					// For "touchend" event e.touches is undefined.
+					//var x = Math.round(e.touches[0].pageX);
+					//var y = Math.round(e.touches[0].pageY);
+
+					// will use the latest e_touch_x,e_touch_y 
+					PointerMovements(e_touch_x,e_touch_y,"touchend");					
 			},false);		
 			
 
